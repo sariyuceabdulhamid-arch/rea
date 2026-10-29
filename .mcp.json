@@ -11,6 +11,10 @@
     "rea": {
       "command": "bash",
       "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "rea"]
+    },
+    "anatomy": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "anatomy"]
     }
   }
 }
