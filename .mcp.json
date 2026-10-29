@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "console-skill": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "console-skill"]
+    },
+    "markitdown": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "markitdown"]
+    },
+    "rea": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "rea"]
+    }
+  }
+}
