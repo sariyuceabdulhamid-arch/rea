@@ -2,11 +2,19 @@
   "mcpServers": {
     "console-skill": {
       "command": "bash",
-      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "console-skill"]
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh",
+        "run",
+        "console-skill"
+      ]
     },
     "markitdown": {
       "command": "bash",
-      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "markitdown"]
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh",
+        "run",
+        "markitdown"
+      ]
     },
     "rea": {
       "command": "bash",
@@ -14,7 +22,11 @@
     },
     "anatomy": {
       "command": "bash",
-      "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh", "run", "anatomy"]
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/setup.sh",
+        "run",
+        "anatomy"
+      ]
     }
   }
 }
