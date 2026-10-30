@@ -35,21 +35,28 @@ def discover(anatomy_dir):
     for name, rel in SCRIPTS.items():
         script = os.path.join(anatomy_dir, rel)
         if os.path.isfile(script):
-            tools[name] = {"script": script, "desc": "Runs `node %s <args>` from the Anatomy skill.\n\n%s"
-                           % (rel, _help(script))}
+            tools[name] = {
+                "script": script,
+                "desc": "Runs `node %s <args>` from the Anatomy skill.\n\n%s"
+                % (rel, _help(script)),
+            }
     tools["anatomy_build"] = {
         "script": None,
-        "desc": ("Runs a figure's build module: `node <args>`, e.g. [\"examples/dial-indicator/build.mjs\", "
-                 "\"--light\"] or [\"examples/raptor-engine/build.mjs\", \"--audit\"]. A relative path is "
-                 "looked up in `cwd`, then in the Anatomy checkout (%s), whose kit/ and examples/ the "
-                 "builds import." % anatomy_dir),
+        "desc": (
+            'Runs a figure\'s build module: `node <args>`, e.g. ["examples/dial-indicator/build.mjs", '
+            '"--light"] or ["examples/raptor-engine/build.mjs", "--audit"]. A relative path is '
+            "looked up in `cwd`, then in the Anatomy checkout (%s), whose kit/ and examples/ the "
+            "builds import." % anatomy_dir
+        ),
     }
     return tools
 
 
 def _help(script):
     try:
-        proc = subprocess.run(["node", script, "--help"], capture_output=True, text=True, timeout=30)
+        proc = subprocess.run(
+            ["node", script, "--help"], capture_output=True, text=True, timeout=30
+        )
     except (OSError, subprocess.SubprocessError):
         return ""
     return (proc.stdout + proc.stderr).strip()
@@ -62,10 +69,19 @@ def tool_schema(name, info):
         "inputSchema": {
             "type": "object",
             "properties": {
-                "args": {"type": "array", "items": {"type": "string"},
-                         "description": "Command-line arguments, e.g. [\"page.html\", \"--out\", \"shot.png\"]"},
-                "cwd": {"type": "string", "description": "Working directory for relative paths"},
-                "timeout": {"type": "number", "description": "Seconds before the run is killed (default 600)"},
+                "args": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": 'Command-line arguments, e.g. ["page.html", "--out", "shot.png"]',
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Working directory for relative paths",
+                },
+                "timeout": {
+                    "type": "number",
+                    "description": "Seconds before the run is killed (default 600)",
+                },
             },
             "required": ["args"],
         },
@@ -90,8 +106,15 @@ def call_tool(info, arguments, default_cwd, anatomy_dir):
         cmd = ["node", module] + args[1:]
     timeout = float(arguments.get("timeout") or 600)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                              errors="replace", timeout=timeout)
+        proc = subprocess.run(
+            cmd,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=timeout,
+        )
     except subprocess.TimeoutExpired:
         return _result("timed out after %gs" % timeout, True)
     except OSError as e:
@@ -123,16 +146,23 @@ def main():
         try:
             msg = json.loads(line)
         except ValueError:
-            _send({"jsonrpc": "2.0", "id": None,
-                   "error": {"code": -32700, "message": "parse error"}})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32700, "message": "parse error"},
+                }
+            )
             continue
         if "id" not in msg:
             continue  # notification
         method, params, mid = msg.get("method"), msg.get("params") or {}, msg["id"]
         if method == "initialize":
-            res = {"protocolVersion": params.get("protocolVersion", DEFAULT_PROTOCOL),
-                   "capabilities": {"tools": {}},
-                   "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION}}
+            res = {
+                "protocolVersion": params.get("protocolVersion", DEFAULT_PROTOCOL),
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
+            }
         elif method == "ping":
             res = {}
         elif method == "tools/list":
@@ -140,13 +170,31 @@ def main():
         elif method == "tools/call":
             info = tools.get(params.get("name"))
             if info is None:
-                _send({"jsonrpc": "2.0", "id": mid,
-                       "error": {"code": -32602, "message": "unknown tool: %s" % params.get("name")}})
+                _send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": mid,
+                        "error": {
+                            "code": -32602,
+                            "message": "unknown tool: %s" % params.get("name"),
+                        },
+                    }
+                )
                 continue
-            res = call_tool(info, params.get("arguments") or {}, opts.workdir, anatomy_dir)
+            res = call_tool(
+                info, params.get("arguments") or {}, opts.workdir, anatomy_dir
+            )
         else:
-            _send({"jsonrpc": "2.0", "id": mid,
-                   "error": {"code": -32601, "message": "method not found: %s" % method}})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": mid,
+                    "error": {
+                        "code": -32601,
+                        "message": "method not found: %s" % method,
+                    },
+                }
+            )
             continue
         _send({"jsonrpc": "2.0", "id": mid, "result": res})
 

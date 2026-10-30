@@ -38,8 +38,12 @@ def discover(skills_dir):
 
 def _help(script):
     try:
-        out = subprocess.run([sys.executable, script, "--help"], capture_output=True,
-                             text=True, timeout=30).stdout
+        out = subprocess.run(
+            [sys.executable, script, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout
     except (OSError, subprocess.SubprocessError):
         out = ""
     return out.strip()
@@ -47,21 +51,31 @@ def _help(script):
 
 def tool_schema(name, info):
     rel = os.path.join(info["skill"], os.path.basename(info["script"]))
-    desc = ("Runs `python3 %s <args>` from the %s skill. Pass a subcommand and its flags "
-            "in `args`; use [\"<subcommand>\", \"--help\"] for a subcommand's flags. Most "
-            "subcommands accept --json. Exit codes: 0 ok, 1 needs attention, 2 bad input.\n\n%s"
-            % (rel, info["skill"], info["help"]))
+    desc = (
+        "Runs `python3 %s <args>` from the %s skill. Pass a subcommand and its flags "
+        'in `args`; use ["<subcommand>", "--help"] for a subcommand\'s flags. Most '
+        "subcommands accept --json. Exit codes: 0 ok, 1 needs attention, 2 bad input.\n\n%s"
+        % (rel, info["skill"], info["help"])
+    )
     return {
         "name": name,
         "description": desc[:8000],
         "inputSchema": {
             "type": "object",
             "properties": {
-                "args": {"type": "array", "items": {"type": "string"},
-                         "description": "Command-line arguments, e.g. [\"boot\", \"game.iso\"]"},
-                "cwd": {"type": "string",
-                        "description": "Working directory (the game workspace that holds console/)"},
-                "timeout": {"type": "number", "description": "Seconds before the run is killed (default 600)"},
+                "args": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": 'Command-line arguments, e.g. ["boot", "game.iso"]',
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Working directory (the game workspace that holds console/)",
+                },
+                "timeout": {
+                    "type": "number",
+                    "description": "Seconds before the run is killed (default 600)",
+                },
             },
             "required": ["args"],
         },
@@ -77,9 +91,15 @@ def call_tool(info, arguments, default_cwd):
         return _result("cwd does not exist: %s" % cwd, True)
     timeout = float(arguments.get("timeout") or 600)
     try:
-        proc = subprocess.run([sys.executable, info["script"]] + args, cwd=cwd,
-                              stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                              errors="replace", timeout=timeout)
+        proc = subprocess.run(
+            [sys.executable, info["script"]] + args,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=timeout,
+        )
     except subprocess.TimeoutExpired:
         return _result("timed out after %gs" % timeout, True)
     except OSError as e:
@@ -98,8 +118,12 @@ def _result(text, is_error):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--skills", default=os.environ.get("CONSOLE_SKILL_DIR",
-                                                       os.path.expanduser("~/.claude/skills")))
+    ap.add_argument(
+        "--skills",
+        default=os.environ.get(
+            "CONSOLE_SKILL_DIR", os.path.expanduser("~/.claude/skills")
+        ),
+    )
     ap.add_argument("--workdir", default=os.getcwd())
     opts = ap.parse_args()
     tools = discover(os.path.expanduser(opts.skills))
@@ -111,16 +135,23 @@ def main():
         try:
             msg = json.loads(line)
         except ValueError:
-            _send({"jsonrpc": "2.0", "id": None,
-                   "error": {"code": -32700, "message": "parse error"}})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32700, "message": "parse error"},
+                }
+            )
             continue
         if "id" not in msg:
             continue  # notification
         method, params, mid = msg.get("method"), msg.get("params") or {}, msg["id"]
         if method == "initialize":
-            res = {"protocolVersion": params.get("protocolVersion", DEFAULT_PROTOCOL),
-                   "capabilities": {"tools": {}},
-                   "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION}}
+            res = {
+                "protocolVersion": params.get("protocolVersion", DEFAULT_PROTOCOL),
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
+            }
         elif method == "ping":
             res = {}
         elif method == "tools/list":
@@ -128,13 +159,29 @@ def main():
         elif method == "tools/call":
             info = tools.get(params.get("name"))
             if info is None:
-                _send({"jsonrpc": "2.0", "id": mid,
-                       "error": {"code": -32602, "message": "unknown tool: %s" % params.get("name")}})
+                _send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": mid,
+                        "error": {
+                            "code": -32602,
+                            "message": "unknown tool: %s" % params.get("name"),
+                        },
+                    }
+                )
                 continue
             res = call_tool(info, params.get("arguments") or {}, opts.workdir)
         else:
-            _send({"jsonrpc": "2.0", "id": mid,
-                   "error": {"code": -32601, "message": "method not found: %s" % method}})
+            _send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": mid,
+                    "error": {
+                        "code": -32601,
+                        "message": "method not found: %s" % method,
+                    },
+                }
+            )
             continue
         _send({"jsonrpc": "2.0", "id": mid, "result": res})
 
